@@ -1,7 +1,9 @@
-name: Auto frontend Snapshot
+name: Auto Frontend Snapshot
+
 on:
   push:
     branches: [ main, master ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,8 +12,11 @@ jobs:
   snapshot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
@@ -22,10 +27,11 @@ jobs:
         env:
           TOKEN: ${{ secrets.COMBINE_REPO_TOKEN }}
         run: |
-          echo "📡 Sending frontend snapshot to combined repo..."
-          REPO_OWNER="YOUR_GITHUB_USERNAME"
+          echo "📡 Uploading frontend snapshot to combined repo..."
+          REPO_OWNER="YOUR_GITHUB_USERNAME"     # <-- change this
           COMBINED_REPO="billing-combined"
           API_URL="https://api.github.com/repos/$REPO_OWNER/$COMBINED_REPO/dispatches"
+          sudo apt-get update && sudo apt-get install -y jq
           curl -X POST -H "Accept: application/vnd.github+json" \
                -H "Authorization: Bearer $TOKEN" \
                -d "{\"event_type\": \"frontend_snapshot\", \"client_payload\": $(cat frontend_snapshot.json | jq -Rs .)}" \
