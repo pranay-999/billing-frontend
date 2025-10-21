@@ -16,6 +16,12 @@ jobs:
           python-version: 3.11
 
       - name: Generate snapshot
+        run: |
+          chmod +x snapshot_generator_frontend.py
+          python snapshot_generator_frontend.py
+
+
+      - name: Generate snapshot
         run: python snapshot_generator_frontend.py
 
       - name: Send snapshot to combined repo
