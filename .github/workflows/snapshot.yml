@@ -11,32 +11,51 @@ permissions:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Show repo structure (for debugging)
+        run: ls -R .
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
-      - name: Ensure script is executable
-        run: chmod +x snapshot_generator_frontend.py
+      - name: Install jq (required for curl JSON)
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Generate snapshot
-        run: python snapshot_generator_frontend.py
+      - name: Run snapshot generator
+        run: |
+          echo "🔍 Running Python snapshot generator..."
+          if [ -f "snapshot_generator_frontend.py" ]; then
+            echo "✅ Found snapshot_generator_frontend.py"
+            python snapshot_generator_frontend.py
+          else
+            echo "❌ snapshot_generator_frontend.py NOT FOUND"
+            exit 1
+          fi
 
       - name: Send snapshot to combined repo
         env:
           TOKEN: ${{ secrets.COMBINE_REPO_TOKEN }}
         run: |
           echo "📡 Uploading snapshot to combined repo..."
-          REPO_OWNER="YOUR_GITHUB_USERNAME"      # 👈 replace with your username
-          COMBINED_REPO="billing-combined"       # 👈 combined repo name
+          REPO_OWNER="YOUR_GITHUB_USERNAME"   # 🔁 Replace with your username (e.g. pranay-999)
+          COMBINED_REPO="billing-combined"
           API_URL="https://api.github.com/repos/$REPO_OWNER/$COMBINED_REPO/dispatches"
 
-          curl -X POST -H "Accept: application/vnd.github+json" \
-               -H "Authorization: Bearer $TOKEN" \
-               -d "{\"event_type\": \"frontend_snapshot\", \"client_payload\": $(cat frontend_snapshot.json | jq -Rs .)}" \
-               $API_URL
-          echo "✅ Snapshot sent successfully"
+          if [ -f "frontend_snapshot.json" ]; then
+            echo "✅ Snapshot file found, sending..."
+            cat frontend_snapshot.json | jq . > /dev/null  # validate JSON
+            curl -X POST -H "Accept: application/vnd.github+json" \
+                 -H "Authorization: Bearer $TOKEN" \
+                 -d "{\"event_type\": \"frontend_snapshot\", \"client_payload\": $(cat frontend_snapshot.json | jq -Rs .)}" \
+                 $API_URL
+            echo "✅ Snapshot sent successfully"
+          else
+            echo "❌ frontend_snapshot.json not found. Did the generator run?"
+            exit 1
+          fi
