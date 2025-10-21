@@ -62,7 +62,7 @@ jobs:
           TOKEN: ${{ secrets.COMBINE_REPO_TOKEN }}
         run: |
           echo "📡 Uploading snapshot to combined repo..."
-          REPO_OWNER="pranay-999"   # 👈 Replace with your GitHub username
+          REPO_OWNER="YOUR_GITHUB_USERNAME"   # 👈 Replace with your GitHub username
           COMBINED_REPO="billing-combined"
           API_URL="https://api.github.com/repos/$REPO_OWNER/$COMBINED_REPO/dispatches"
 
