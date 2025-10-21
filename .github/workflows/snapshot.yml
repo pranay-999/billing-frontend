@@ -1,9 +1,7 @@
-name: Auto Frontend Snapshot
-
+name: Auto Backend Snapshot
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,66 +9,25 @@ permissions:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Show file structure (debug)
-        run: |
-          echo "🔍 Current working directory:"
-          pwd
-          echo "📁 Listing all files:"
-          ls -alR .
-
-      - name: Normalize line endings (fix CRLF issues)
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y dos2unix
-          find . -type f -name "*.py" -exec dos2unix {} \;
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
-      - name: Run snapshot generator safely
-        run: |
-          echo "🚀 Checking for snapshot_generator_frontend.py"
-          if [ -f "snapshot_generator_frontend.py" ]; then
-            echo "✅ Found snapshot_generator_frontend.py"
-            python snapshot_generator_frontend.py
-          else
-            echo "❌ snapshot_generator_frontend.py not found in current directory."
-            echo "📂 Current directory:"
-            pwd
-            exit 1
-          fi
-
-      - name: Verify snapshot JSON
-        run: |
-          if [ -f "frontend_snapshot.json" ]; then
-            echo "✅ frontend_snapshot.json created successfully"
-            head -n 20 frontend_snapshot.json
-          else
-            echo "❌ frontend_snapshot.json missing"
-            exit 1
-          fi
+      - name: Generate backend snapshot
+        run: python snapshot_generator_backend.py
 
       - name: Send snapshot to combined repo
         env:
           TOKEN: ${{ secrets.COMBINE_REPO_TOKEN }}
         run: |
-          echo "📡 Uploading snapshot to combined repo..."
-          REPO_OWNER="YOUR_GITHUB_USERNAME"   # 👈 Replace with your GitHub username
+          echo "📡 Sending backend snapshot to combined repo..."
+          REPO_OWNER="YOUR_GITHUB_USERNAME"
           COMBINED_REPO="billing-combined"
           API_URL="https://api.github.com/repos/$REPO_OWNER/$COMBINED_REPO/dispatches"
-
-          sudo apt-get install -y jq
-          cat frontend_snapshot.json | jq . > /dev/null
-
           curl -X POST -H "Accept: application/vnd.github+json" \
                -H "Authorization: Bearer $TOKEN" \
-               -d "{\"event_type\": \"frontend_snapshot\", \"client_payload\": $(cat frontend_snapshot.json | jq -Rs .)}" \
+               -d "{\"event_type\": \"backend_snapshot\", \"client_payload\": $(cat backend_snapshot.json | jq -Rs .)}" \
                $API_URL
-          echo "✅ Snapshot sent successfully!"
+          echo "✅ Snapshot sent successfully"
