@@ -14,9 +14,6 @@ import {
   TableBody,
   Autocomplete,
   Divider,
-  Radio,
-  RadioGroup,
-  FormLabel,
   IconButton,
   Dialog,
   DialogTitle,
@@ -24,6 +21,9 @@ import {
   DialogActions,
   Snackbar,
   Alert,
+  Radio,
+  RadioGroup,
+  FormLabel,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import axios from "axios";
@@ -57,8 +57,9 @@ export default function AddBill() {
   const [billNumber, setBillNumber] = useState(1);
   const [billDate, setBillDate] = useState("");
   const [designList, setDesignList] = useState([]);
+  const [showCustomer, setShowCustomer] = useState(false);
+  const [customer, setCustomer] = useState({ name: "", phone: "" });
 
-  // UI States
   const [openSaveConfirm, setOpenSaveConfirm] = useState(false);
   const [openCancelConfirm, setOpenCancelConfirm] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
@@ -274,7 +275,6 @@ export default function AddBill() {
         severity: "success",
       });
 
-      // Reset all
       setEntries([]);
       setSnapshotBeforeGst(null);
       setGstEnabled(false);
@@ -294,6 +294,7 @@ export default function AddBill() {
         amount: "",
       });
       setEditingIndex(null);
+      setCustomer({ name: "", phone: "" });
     } catch (e) {
       console.error("Error saving bill:", e);
       setSnackbar({ open: true, message: "❌ Error saving bill.", severity: "error" });
@@ -306,48 +307,67 @@ export default function AddBill() {
         <Typography variant="h6" fontWeight="bold" color="primary">
           🧾 Bill No: {billNumber}
         </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
-          <Typography fontWeight="bold">{billDate}</Typography>
-        </Box>
+        <Typography fontWeight="bold">{billDate}</Typography>
       </Paper>
 
       <Box display="flex" gap={3}>
-        {/* Left Form */}
-        <Paper sx={{ p: 2, width: 360, boxShadow: 2, borderRadius: 2 }}>
-          <Typography variant="subtitle1" fontWeight="bold" color="primary">
-            Add Item
-          </Typography>
-
-          <Box mt={1} display="flex" flexDirection="column" gap={1.2}>
-            <Autocomplete
-              options={designList}
-              getOptionLabel={(o) => o.design_name}
-              onChange={onDesignSelect}
-              value={form.design_name ? { design_name: form.design_name } : null}
-              renderInput={(params) => <TextField {...params} label="Design Name" size="small" />}
-            />
-            <TextField label="Size" name="size" value={form.size} onChange={onFormChange} size="small" />
-            <TextField label="Type" name="type" value={form.type} onChange={onFormChange} size="small" />
-            <TextField label="Boxes Left" value={form.stock || "-"} disabled size="small" />
-            <TextField label="Unit Price (₹)" name="unit_price" value={form.unit_price} onChange={onFormChange} size="small" />
-            <TextField label="Boxes Sold" name="boxes_sold" value={form.boxes_sold} onChange={onFormChange} size="small" />
-            <TextField label="Amount (₹)" name="amount" value={form.amount} disabled size="small" />
-
-            <Box mt={1} display="flex" flexDirection="column" gap={1}>
+        {/* LEFT SIDE */}
+        <Box display="flex" flexDirection="column" gap={2}>
+          <Paper sx={{ p: 2, width: 360, boxShadow: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight="bold" color="primary">
+              Add Item
+            </Typography>
+            <Box mt={1} display="flex" flexDirection="column" gap={1.2}>
+              <Autocomplete
+                options={designList}
+                getOptionLabel={(o) => o.design_name}
+                onChange={onDesignSelect}
+                value={form.design_name ? { design_name: form.design_name } : null}
+                renderInput={(params) => <TextField {...params} label="Design Name" size="small" />}
+              />
+              <TextField label="Size" name="size" value={form.size} onChange={onFormChange} size="small" />
+              <TextField label="Type" name="type" value={form.type} onChange={onFormChange} size="small" />
+              <TextField label="Boxes Left" value={form.stock || "-"} disabled size="small" />
+              <TextField label="Unit Price (₹)" name="unit_price" value={form.unit_price} onChange={onFormChange} size="small" />
+              <TextField label="Boxes Sold" name="boxes_sold" value={form.boxes_sold} onChange={onFormChange} size="small" />
+              <TextField label="Amount (₹)" name="amount" value={form.amount} disabled size="small" />
               <Button variant="contained" onClick={handleAddItem}>
                 {editingIndex !== null ? "UPDATE ITEM" : "ADD ITEM"}
               </Button>
-              <Button variant="contained" color="success" onClick={() => setOpenSaveConfirm(true)}>
-                SAVE BILL
-              </Button>
-              <Button variant="outlined" color="error" onClick={() => setOpenCancelConfirm(true)}>
-                CANCEL
-              </Button>
             </Box>
-          </Box>
-        </Paper>
+          </Paper>
 
-        {/* Right Section */}
+          <Paper sx={{ p: 2, width: 360, boxShadow: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight="bold" color="primary" mb={1.5}>
+              Customer Details
+            </Typography>
+            <FormControlLabel
+              control={<Switch checked={showCustomer} onChange={(e) => setShowCustomer(e.target.checked)} />}
+              label="Add Customer"
+            />
+            {showCustomer && (
+              <Box mt={1.5} display="flex" flexDirection="column" gap={1.2}>
+                <TextField
+                  label="Customer Name"
+                  name="customer_name"
+                  value={customer.name}
+                  onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                  size="small"
+                />
+                <TextField
+                  label="Phone Number"
+                  name="customer_phone"
+                  value={customer.phone}
+                  onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                  inputProps={{ maxLength: 10 }}
+                  size="small"
+                />
+              </Box>
+            )}
+          </Paper>
+        </Box>
+
+        {/* RIGHT SIDE */}
         <Paper sx={{ flex: 1, p: 2, boxShadow: 2, borderRadius: 2 }}>
           <Typography variant="subtitle1" fontWeight="bold" color="primary">
             Current Bill Items
@@ -394,7 +414,22 @@ export default function AddBill() {
           </Table>
 
           <Divider sx={{ my: 1 }} />
-          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+
+          {/* Total stays at same position */}
+          <Box textAlign="right" sx={{ mb: 2 }}>
+            <Typography variant="h6" fontWeight="bold">
+              Total: ₹{totalBeforeGst.toFixed(2)}
+            </Typography>
+            {gstEnabled && (
+              <>
+                <Typography>CGST (9%): ₹{cgst.toFixed(2)}</Typography>
+                <Typography>SGST (9%): ₹{sgst.toFixed(2)}</Typography>
+              </>
+            )}
+          </Box>
+
+          {/* Bottom section - GST left, Grand Total right */}
+          <Box display="flex" justifyContent="space-between" alignItems="flex-end" mt="auto">
             <Box>
               <FormControlLabel
                 control={<Switch checked={gstEnabled} onChange={(e) => handleGstToggleChange(e.target.checked)} />}
@@ -414,25 +449,25 @@ export default function AddBill() {
                     <FormControlLabel value="exclusive" control={<Radio />} label="Exclusive" />
                     <FormControlLabel value="inclusive" control={<Radio />} label="Inclusive" />
                   </RadioGroup>
-
                   {gstMode === "inclusive" && !gstLocked && (
-                    <Button size="small" variant="outlined" onClick={handleAdjustUnitPrice}>
+                    <Button size="small" variant="outlined" onClick={handleAdjustUnitPrice} sx={{ mt: 1 }}>
                       Adjust Unit Price
                     </Button>
                   )}
                 </>
               )}
+              <Box mt={2} display="flex" gap={2}>
+                <Button variant="contained" color="success" onClick={() => setOpenSaveConfirm(true)}>
+                  SAVE BILL
+                </Button>
+                <Button variant="outlined" color="error" onClick={() => setOpenCancelConfirm(true)}>
+                  CANCEL
+                </Button>
+              </Box>
             </Box>
 
             <Box textAlign="right">
-              <Typography variant="h6">Total: ₹{totalBeforeGst.toFixed(2)}</Typography>
-              {gstEnabled && (
-                <>
-                  <Typography>CGST (9%): ₹{cgst.toFixed(2)}</Typography>
-                  <Typography>SGST (9%): ₹{sgst.toFixed(2)}</Typography>
-                </>
-              )}
-              <Typography variant="h5" fontWeight="bold" color="primary" mt={1}>
+              <Typography variant="h5" fontWeight="bold" color="primary">
                 Grand Total: ₹{grandTotal.toFixed(2)}
               </Typography>
             </Box>
@@ -440,17 +475,18 @@ export default function AddBill() {
         </Paper>
       </Box>
 
-      {/* Save Confirm */}
+      {/* Dialogs */}
       <Dialog open={openSaveConfirm} onClose={() => setOpenSaveConfirm(false)}>
         <DialogTitle>Confirm Save</DialogTitle>
         <DialogContent>Are you sure you want to save this bill?</DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenSaveConfirm(false)}>No</Button>
-          <Button onClick={() => { setOpenSaveConfirm(false); handleSaveBill(); }} autoFocus>Yes</Button>
+          <Button onClick={() => { setOpenSaveConfirm(false); handleSaveBill(); }} autoFocus>
+            Yes
+          </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Cancel Confirm */}
       <Dialog open={openCancelConfirm} onClose={() => setOpenCancelConfirm(false)}>
         <DialogTitle>Cancel Bill</DialogTitle>
         <DialogContent>Do you want to cancel and clear this bill?</DialogContent>
@@ -479,6 +515,7 @@ export default function AddBill() {
                 amount: "",
               });
               setEditingIndex(null);
+              setCustomer({ name: "", phone: "" });
             }}
             autoFocus
           >
@@ -487,7 +524,6 @@ export default function AddBill() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
