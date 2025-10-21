@@ -1,0 +1,23 @@
+name: Auto Frontend Snapshot
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Generate frontend snapshot
+        run: python snapshot_generator_frontend.py
+      - name: Commit and push snapshot
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "actions@github.com"
+          git add frontend_snapshot.json frontend_snapshot.zip snapshot_history.json || true
+          git commit -m "Auto update frontend snapshot [skip ci]" || echo "No changes"
+          git push
