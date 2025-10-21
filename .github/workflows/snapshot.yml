@@ -1,7 +1,9 @@
 name: Auto Frontend Snapshot
+
 on:
   push:
     branches: [ main, master ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,16 +12,16 @@ jobs:
   snapshot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
-      - name: Generate snapshot
-        run: |
-          chmod +x snapshot_generator_frontend.py
-          python snapshot_generator_frontend.py
-
+      - name: Ensure script is executable
+        run: chmod +x snapshot_generator_frontend.py
 
       - name: Generate snapshot
         run: python snapshot_generator_frontend.py
@@ -29,11 +31,12 @@ jobs:
           TOKEN: ${{ secrets.COMBINE_REPO_TOKEN }}
         run: |
           echo "📡 Uploading snapshot to combined repo..."
-          REPO_OWNER="YOUR_GITHUB_USERNAME"
-          COMBINED_REPO="billing-combined"
+          REPO_OWNER="YOUR_GITHUB_USERNAME"      # 👈 replace with your username
+          COMBINED_REPO="billing-combined"       # 👈 combined repo name
           API_URL="https://api.github.com/repos/$REPO_OWNER/$COMBINED_REPO/dispatches"
+
           curl -X POST -H "Accept: application/vnd.github+json" \
                -H "Authorization: Bearer $TOKEN" \
                -d "{\"event_type\": \"frontend_snapshot\", \"client_payload\": $(cat frontend_snapshot.json | jq -Rs .)}" \
                $API_URL
-          echo "✅ Snapshot sent to combined repo"
+          echo "✅ Snapshot sent successfully"
