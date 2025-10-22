@@ -56,6 +56,7 @@ export default function AddBill() {
 
   const [billNumber, setBillNumber] = useState(1);
   const [billDate, setBillDate] = useState("");
+  const [viewBillNo, setViewBillNo] = useState("");
   const [designList, setDesignList] = useState([]);
   const [showCustomer, setShowCustomer] = useState(false);
   const [customer, setCustomer] = useState({ name: "", phone: "" });
@@ -161,6 +162,27 @@ export default function AddBill() {
       setSnackbar({ open: true, message: "Cannot sell more than stock.", severity: "error" });
       return;
     }
+    const handleViewBill = async () => {
+      if (!viewBillNo) {
+        setSnackbar({ open: true, message: "Enter a bill number.", severity: "warning" });
+        return;
+      }
+      try {
+        const res = await axios.get(`${API_BASE}/get_sales`);
+        const bills = res.data;
+        const bill = bills.find((b) => b[0] === Number(viewBillNo)); // assuming first index is bill_id
+        if (!bill) {
+          setSnackbar({ open: true, message: "Bill not found.", severity: "error" });
+          return;
+        }
+        setEntries(JSON.parse(bill[1] || "[]")); // adjust if needed
+        setSnackbar({ open: true, message: `Loaded Bill #${viewBillNo}`, severity: "success" });
+      } catch (e) {
+        console.error(e);
+        setSnackbar({ open: true, message: "Error fetching bill.", severity: "error" });
+      }
+    };
+    
 
     const entry = {
       design_name: form.design_name,
@@ -206,6 +228,27 @@ export default function AddBill() {
     copy.splice(index, 1);
     setEntries(copy);
   }
+  async function handleViewBill() {
+    if (!viewBillNo) {
+      setSnackbar({ open: true, message: "Enter a bill number.", severity: "warning" });
+      return;
+    }
+    try {
+      const res = await axios.get(`${API_BASE}/get_sales`);
+      const bills = res.data;
+      const bill = bills.find((b) => b[0] === Number(viewBillNo)); // assumes first index is bill_id
+      if (!bill) {
+        setSnackbar({ open: true, message: "Bill not found.", severity: "error" });
+        return;
+      }
+      setEntries(JSON.parse(bill[1] || "[]")); // adjust if needed
+      setSnackbar({ open: true, message: `Loaded Bill #${viewBillNo}`, severity: "success" });
+    } catch (e) {
+      console.error(e);
+      setSnackbar({ open: true, message: "Error fetching bill.", severity: "error" });
+    }
+  }
+  
 
   function handleAdjustUnitPrice() {
     if (!gstEnabled || gstMode !== "inclusive") return;
@@ -303,12 +346,37 @@ export default function AddBill() {
 
   return (
     <Box p={2}>
-      <Paper sx={{ p: 2, mb: 2, display: "flex", justifyContent: "space-between", boxShadow: 3 }}>
-        <Typography variant="h6" fontWeight="bold" color="primary">
-          🧾 Bill No: {billNumber}
-        </Typography>
-        <Typography fontWeight="bold">{billDate}</Typography>
-      </Paper>
+      <Paper
+  sx={{
+    p: 2,
+    mb: 2,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: 3,
+  }}
+>
+  <Typography variant="h6" fontWeight="bold" color="primary">
+    🧾 Bill No: {billNumber}
+  </Typography>
+
+  <Typography fontWeight="bold">{billDate}</Typography>
+
+  {/* ✅ New View Bill input + button beside Bill No */}
+  <Box display="flex" alignItems="center" gap={1}>
+    <TextField
+      label="Enter Bill No"
+      size="small"
+      value={viewBillNo}
+      onChange={(e) => setViewBillNo(e.target.value)}
+      sx={{ width: 140 }}
+    />
+    <Button variant="contained" onClick={handleViewBill}>
+      View Bill
+    </Button>
+  </Box>
+</Paper>
+
 
       <Box display="flex" gap={3}>
         {/* LEFT SIDE */}
