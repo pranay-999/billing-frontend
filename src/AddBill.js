@@ -162,6 +162,7 @@ export default function AddBill() {
       setSnackbar({ open: true, message: "Cannot sell more than stock.", severity: "error" });
       return;
     }
+     // eslint-disable-next-line no-unused-vars
     const handleViewBill = async () => {
       if (!viewBillNo) {
         setSnackbar({ open: true, message: "Enter a bill number.", severity: "warning" });
