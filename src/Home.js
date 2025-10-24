@@ -121,7 +121,7 @@ const Home = () => {
           borderTop: "1px solid #dee2e6",
         }}
       >
-        © {new Date().getFullYear()} Tiles & Sanitary Billing System — Designed by Rohith
+        © {new Date().getFullYear()} Tiles & Sanitary Billing System — Designed by Pranay
       </Box>
     </Box>
   );
